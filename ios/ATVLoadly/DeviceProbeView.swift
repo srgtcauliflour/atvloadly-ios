@@ -5,6 +5,7 @@ struct DeviceProbeView: View {
     let device: AppleTVDiscovery.Device
     @State private var state = "Not connected"
     @State private var connection: NWConnection?
+    @State private var timeoutTask: Task<Void, Never>?
 
     var body: some View {
         Form {
@@ -23,10 +24,15 @@ struct DeviceProbeView: View {
             }
         }
         .navigationTitle("Device diagnostics")
-        .onDisappear { connection?.cancel(); connection = nil }
+        .onDisappear {
+            timeoutTask?.cancel()
+            connection?.cancel()
+            connection = nil
+        }
     }
 
     private func probe() {
+        timeoutTask?.cancel()
         connection?.cancel()
         let endpoint = NWEndpoint.service(name: device.bonjourName, type: device.service, domain: device.bonjourDomain, interface: nil)
         let next = NWConnection(to: endpoint, using: .tcp)
@@ -36,8 +42,12 @@ struct DeviceProbeView: View {
             DispatchQueue.main.async {
                 guard connection === next else { return }
                 switch status {
-                case .ready: state = "TCP connection established"
-                case .failed(let error): state = "Connection failed: \(error.localizedDescription)"
+                case .ready:
+                    timeoutTask?.cancel()
+                    state = "TCP connection established"
+                case .failed(let error):
+                    timeoutTask?.cancel()
+                    state = "Connection failed: \(error.localizedDescription)"
                 case .waiting(let error): state = "Waiting: \(error.localizedDescription)"
                 case .cancelled: state = "Disconnected"
                 default: break
@@ -45,5 +55,13 @@ struct DeviceProbeView: View {
             }
         }
         next.start(queue: .main)
+        timeoutTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            guard !Task.isCancelled, connection === next else { return }
+            if case .ready = next.state { return }
+            state = "Connection timed out after 10 seconds. Device may be offline or Bonjour data cached."
+            connection = nil
+            next.cancel()
+        }
     }
 }
