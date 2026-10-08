@@ -8,6 +8,8 @@ final class AppleTVDiscovery: ObservableObject {
         let name: String
         let service: String
         let endpoint: String
+        let bonjourName: String
+        let bonjourDomain: String
     }
 
     @Published private(set) var devices: [Device] = []
@@ -45,7 +47,7 @@ final class AppleTVDiscovery: ObservableObject {
             for result in browser.browseResults {
                 guard case let .service(name, type, domain, _) = result.endpoint else { continue }
                 let key = "\(name)|\(type)|\(domain)"
-                found[key] = Device(id: key, name: name, service: type, endpoint: String(describing: result.endpoint))
+                found[key] = Device(id: key, name: name, service: type, endpoint: String(describing: result.endpoint), bonjourName: name, bonjourDomain: domain)
             }
         }
         devices = found.values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
