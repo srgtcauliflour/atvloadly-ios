@@ -19,6 +19,7 @@ struct DiscoveryView: View {
                         Text(device.name).font(.headline)
                         Text(device.service).font(.caption)
                         Text(device.endpoint).font(.caption2).foregroundStyle(.secondary)
+                        NavigationLink("Inspect connection") { DeviceProbeView(device: device) }
                     }
                 }
             }
