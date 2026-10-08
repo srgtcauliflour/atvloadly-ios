@@ -15,10 +15,13 @@ final class AppleTVDiscovery: ObservableObject {
     @Published private(set) var devices: [Device] = []
     @Published private(set) var status = "Not scanning"
     private var browsers: [NWBrowser] = []
+    private var liveResults: [String: Set<NWBrowser.Result>] = [:]
+    private var scanGeneration = 0
 
     func start() {
         stop()
         status = "Searching local network…"
+        let generation = scanGeneration
         for type in ["_apple-mobdev2._tcp", "_companion-link._tcp", "_airplay._tcp", "_remotepairing._tcp", "_remoted._tcp"] {
             let browser = NWBrowser(for: .bonjour(type: type, domain: "local."), using: .tcp)
             browser.stateUpdateHandler = { [weak self] state in
@@ -33,8 +36,12 @@ final class AppleTVDiscovery: ObservableObject {
                     }
                 }
             }
-            browser.browseResultsChangedHandler = { [weak self] _, _ in
-                Task { @MainActor in self?.refresh() }
+            browser.browseResultsChangedHandler = { [weak self] results, _ in
+                Task { @MainActor in
+                    guard let self, self.scanGeneration == generation else { return }
+                    self.liveResults[type] = results
+                    self.refresh()
+                }
             }
             browsers.append(browser)
             browser.start(queue: .main)
@@ -43,8 +50,8 @@ final class AppleTVDiscovery: ObservableObject {
 
     private func refresh() {
         var found: [String: Device] = [:]
-        for browser in browsers {
-            for result in browser.browseResults {
+        for results in liveResults.values {
+            for result in results {
                 guard case let .service(name, type, domain, _) = result.endpoint else { continue }
                 let key = "\(name)|\(type)|\(domain)"
                 found[key] = Device(id: key, name: name, service: type, endpoint: String(describing: result.endpoint), bonjourName: name, bonjourDomain: domain)
@@ -55,6 +62,8 @@ final class AppleTVDiscovery: ObservableObject {
     }
 
     func stop() {
+        scanGeneration += 1
+        liveResults.removeAll()
         browsers.forEach { $0.cancel() }
         browsers.removeAll()
         devices = []
