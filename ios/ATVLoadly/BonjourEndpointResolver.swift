@@ -7,12 +7,14 @@ final class BonjourEndpointResolver: NSObject, NetServiceDelegate {
     private var completion: ((String) -> Void)?
 
     func resolve(name: String, type: String, domain: String, completion: @escaping (String) -> Void) {
+        assert(Thread.isMainThread, "NetService must be scheduled on the main run loop")
         cancel()
         self.completion = completion
         let next = NetService(domain: domain, type: type, name: name)
         service = next
         next.delegate = self
-        next.resolve(withTimeout: 8)
+        next.schedule(in: .main, forMode: .common)
+        next.resolve(withTimeout: 15)
     }
 
     func netServiceDidResolveAddress(_ sender: NetService) {
@@ -31,6 +33,7 @@ final class BonjourEndpointResolver: NSObject, NetServiceDelegate {
         let callback = completion
         completion = nil
         service?.stop()
+        service?.remove(from: .main, forMode: .common)
         service = nil
         callback?(result)
     }
