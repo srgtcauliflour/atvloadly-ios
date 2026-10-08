@@ -12,6 +12,14 @@ targets:
     sources: [ATVLoadly]
     info:
       path: ATVLoadly/Info.plist
+      properties:
+        NSLocalNetworkUsageDescription: Discover Apple TVs and connect to devices on your local network.
+        NSBonjourServices:
+          - _apple-mobdev2._tcp
+          - _companion-link._tcp
+          - _airplay._tcp
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.srgtcauliflour.atvloadly
