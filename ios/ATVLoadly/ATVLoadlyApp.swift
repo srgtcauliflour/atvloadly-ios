@@ -14,6 +14,9 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("On-device discovery") {
+                    NavigationLink("Find Apple TVs") { DiscoveryView() }
+                }
                 Section("ATVLoadly server") {
                     TextField("http://192.168.1.10:5533", text: $serviceURL)
                         .textInputAutocapitalization(.never)
