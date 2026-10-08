@@ -1,0 +1,30 @@
+name: iOS build
+on:
+  workflow_dispatch:
+  push:
+    paths: ['ios/**', '.github/workflows/ios-build.yml']
+  pull_request:
+    paths: ['ios/**', '.github/workflows/ios-build.yml']
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: cd ios && xcodegen generate
+      - name: Compile for iPhone simulator
+        run: xcodebuild -project ios/ATVLoadly.xcodeproj -scheme ATVLoadly -sdk iphonesimulator -configuration Release CODE_SIGNING_ALLOWED=NO build
+      - name: Archive unsigned iPhone app
+        run: xcodebuild -project ios/ATVLoadly.xcodeproj -scheme ATVLoadly -sdk iphoneos -configuration Release -archivePath "$RUNNER_TEMP/ATVLoadly.xcarchive" CODE_SIGNING_ALLOWED=NO archive
+      - name: Package unsigned IPA (not installable until signed)
+        run: |
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$RUNNER_TEMP/ATVLoadly.xcarchive/Products/Applications/ATVLoadly.app" "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -qr "$GITHUB_WORKSPACE/ATVLoadly-unsigned.ipa" Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ATVLoadly-unsigned-ipa
+          path: ATVLoadly-unsigned.ipa
