@@ -6,6 +6,8 @@ struct DeviceProbeView: View {
     @State private var state = "Not connected"
     @State private var connection: NWConnection?
     @State private var timeoutTask: Task<Void, Never>?
+    @State private var resolvedEndpoint = "Not resolved"
+    @State private var resolver = BonjourEndpointResolver()
 
     var body: some View {
         Form {
@@ -20,6 +22,10 @@ struct DeviceProbeView: View {
                     }
                 }
             }
+            Section("Bonjour resolution") {
+                Text(resolvedEndpoint).font(.footnote).textSelection(.enabled)
+                Button("Resolve host and port") { resolveEndpoint() }
+            }
             Section("TCP connection") {
                 Text(state)
                 Button("Test connection") { probe() }
@@ -31,9 +37,17 @@ struct DeviceProbeView: View {
         }
         .navigationTitle("Device diagnostics")
         .onDisappear {
+            resolver.cancel()
             timeoutTask?.cancel()
             connection?.cancel()
             connection = nil
+        }
+    }
+
+    private func resolveEndpoint() {
+        resolvedEndpoint = "Resolving…"
+        resolver.resolve(name: device.bonjourName, type: device.service, domain: device.bonjourDomain) { result in
+            DispatchQueue.main.async { resolvedEndpoint = result }
         }
     }
 
