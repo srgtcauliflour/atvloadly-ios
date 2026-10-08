@@ -1,0 +1,19 @@
+name: ATVLoadly
+options:
+  bundleIdPrefix: com.srgtcauliflour
+settings:
+  base:
+    IPHONEOS_DEPLOYMENT_TARGET: '17.0'
+    SWIFT_VERSION: '5.0'
+targets:
+  ATVLoadly:
+    type: application
+    platform: iOS
+    sources: [ATVLoadly]
+    info:
+      path: ATVLoadly/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.srgtcauliflour.atvloadly
+        TARGETED_DEVICE_FAMILY: '1'
+        CODE_SIGN_STYLE: Manual
