@@ -13,6 +13,12 @@ struct DeviceProbeView: View {
                 LabeledContent("Name", value: device.name)
                 LabeledContent("Service", value: device.service)
                 Text(device.endpoint).font(.caption).textSelection(.enabled)
+                LabeledContent("Interface", value: device.interfaceName.isEmpty ? "Unspecified" : device.interfaceName)
+                if !device.txtRecords.isEmpty {
+                    ForEach(device.txtRecords, id: \.self) { entry in
+                        Text(entry).font(.caption2).textSelection(.enabled)
+                    }
+                }
             }
             Section("TCP connection") {
                 Text(state)
