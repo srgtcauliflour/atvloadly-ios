@@ -19,7 +19,7 @@ final class AppleTVDiscovery: ObservableObject {
     func start() {
         stop()
         status = "Searching local network…"
-        for type in ["_apple-mobdev2._tcp", "_companion-link._tcp", "_airplay._tcp"] {
+        for type in ["_apple-mobdev2._tcp", "_companion-link._tcp", "_airplay._tcp", "_remotepairing._tcp", "_remoted._tcp"] {
             let browser = NWBrowser(for: .bonjour(type: type, domain: "local."), using: .tcp)
             browser.stateUpdateHandler = { [weak self] state in
                 Task { @MainActor in

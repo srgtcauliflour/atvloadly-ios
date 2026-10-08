@@ -18,6 +18,8 @@ targets:
           - _apple-mobdev2._tcp
           - _companion-link._tcp
           - _airplay._tcp
+          - _remotepairing._tcp
+          - _remoted._tcp
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     settings:
