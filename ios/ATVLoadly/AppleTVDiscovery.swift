@@ -22,7 +22,13 @@ final class AppleTVDiscovery: ObservableObject {
             browser.stateUpdateHandler = { [weak self] state in
                 Task { @MainActor in
                     guard let self else { return }
-                    if case .failed(let error) = state { self.status = "Discovery failed: \(error.localizedDescription)" }
+                    if case .failed(let error) = state {
+                        if case .dns(let code) = error, code == -65555 {
+                            self.status = "Local network access denied. Enable ATVLoadly under Settings → Privacy & Security → Local Network, then scan again."
+                        } else {
+                            self.status = "Discovery failed (\(error.localizedDescription)). Check Wi-Fi and local network permissions."
+                        }
+                    }
                 }
             }
             browser.browseResultsChangedHandler = { [weak self] _, _ in
